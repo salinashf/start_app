@@ -5,7 +5,14 @@
 
 Esta aplicación es un comando que permite abrir aplicaciones previamente instaladas mediante sus accesos directos. Busca el acceso directo en **C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs** y, una vez encontrado, abre la aplicación a través del archivo ejecutable. La creé con el objetivo de abrir cualquier aplicación desde un comando.
 
-> Ejemplo: **start_app -name brave**
+> Ejemplo: **start_app -name brave -exactly true**
+
+Parámetros requeridos
+| Parámetro | valor |
+| ------ | ------ |
+| -name  | Aplicación a abrir  |
+| -exactly | Determina si la búsqueda es exacta, **true** o  **false**|
+
 
 No quería llenar la variable `PATH` del sistema operativo con todas las aplicaciones instaladas. Con esta solución, solo agrego una sola variable dentro del `PATH`.
 

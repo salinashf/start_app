@@ -13,7 +13,7 @@ import (
 	"github.com/go-ole/go-ole/oleutil"
 )
 
-func buscarArchivos(nombreArchivo string, directorio string) ([]string, error) {
+func buscarArchivos(nombreArchivo string, directorio string, is_exactly bool) ([]string, error) {
 	var coincidencias []string
 
 	err := filepath.Walk(directorio, func(ruta string, info os.FileInfo, err error) error {
@@ -21,7 +21,8 @@ func buscarArchivos(nombreArchivo string, directorio string) ([]string, error) {
 			return err
 		}
 		// Comparar los nombres de archivo en minúsculas
-		if strings.Contains(strings.ToLower(info.Name()), strings.ToLower(nombreArchivo)) {
+		if compararCadenas(nombreArchivo, info.Name(), is_exactly) {
+			log.Println("###--Econtrado--###")
 			coincidencias = append(coincidencias, ruta)
 		}
 		if len(coincidencias) >= 1 {
@@ -30,6 +31,8 @@ func buscarArchivos(nombreArchivo string, directorio string) ([]string, error) {
 		}
 		return nil
 	})
+	log.Println("Coincidencias:")
+	log.Println(coincidencias)
 
 	// Ignorar el error de "encontradas dos coincidencias"
 	if err != nil && err.Error() != "encontradas dos coincidencias" {
@@ -37,6 +40,22 @@ func buscarArchivos(nombreArchivo string, directorio string) ([]string, error) {
 	}
 
 	return coincidencias, nil
+}
+func compararCadenas(input string, path_finder string, is_exactly bool) bool {
+	log.Println("Comparando:..", strings.ToLower(input), strings.ToLower(path_finder), is_exactly)
+	if is_exactly {
+		if strings.Compare(strings.ToLower(input)+".lnk", strings.ToLower(path_finder)) == 0 {
+			log.Println("   Encontrado_A:..")
+			return true
+		}
+	} else {
+		if strings.Contains(strings.ToLower(path_finder), strings.ToLower(input)) {
+			log.Println("   Encontrado_B:..")
+			return true
+		}
+	}
+	log.Println(" No Encontrado:..")
+	return false
 }
 
 func obtenerRutaEjecutableDeAccesoDirecto(rutaAccesoDirecto string) (string, error) {
@@ -95,6 +114,7 @@ func main() {
 
 	// Definir el flag para el nombre del archivo
 	nombreArchivo := flag.String("name", "", "Nombre del archivo a buscar")
+	exactly := flag.Bool("exactly", true, "Es busqueda exacta")
 	flag.Parse()
 
 	if *nombreArchivo == "" {
@@ -107,7 +127,7 @@ func main() {
 	directorio := "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs"
 
 	// Buscar archivos
-	resultados, err := buscarArchivos(*nombreArchivo, directorio)
+	resultados, err := buscarArchivos(*nombreArchivo, directorio, *exactly)
 	if err != nil {
 		log.Println("Error al buscar archivos:", err)
 		fmt.Println("Error al buscar archivos:", err)
