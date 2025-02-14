@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
+	"github.com/joho/godotenv"
 )
 
 func buscarArchivos(nombreArchivo string, directorio string, is_exactly bool) ([]string, error) {
@@ -86,7 +87,7 @@ func obtenerRutaEjecutableDeAccesoDirecto(rutaAccesoDirecto string) (string, err
 	return targetPath, nil
 }
 
-func abrirRutaEjecutableDeAccesoDirecto(programa string) {
+func abrirRutaEjecutableDeAccesoDirecto(programa string) error {
 	// Comando para ejecutar el programa
 	cmd := exec.Command(programa)
 
@@ -96,8 +97,44 @@ func abrirRutaEjecutableDeAccesoDirecto(programa string) {
 	// Manejar errores
 	if err != nil {
 		log.Println("Error al abrir el programa:", err)
-		return
+		return fmt.Errorf("error al abrir el programa: %v", err)
 	}
+	return nil
+}
+
+func busqueda(directorio string, nombreArchivo string, exactly bool) error {
+	log.Println("###################################")
+	log.Println("----Busca dentro de la carpeta----")
+	log.Println("----Directorio:", directorio)
+	log.Println("###################################")
+
+	// Buscar archivos
+	resultados, err := buscarArchivos(nombreArchivo, directorio, exactly)
+	if err != nil {
+		log.Println("Error al buscar archivos:", err)
+		return fmt.Errorf("error al buscar archivos: %v", err)
+	}
+	if len(resultados) == 0 {
+		log.Println("No se encontraron coincidencias")
+		return fmt.Errorf("no se encontraron coincidencias: %v", err)
+	}
+
+	// Imprimir resultados
+	for i, resultado := range resultados {
+		log.Printf("Coincidencia %d: %s\n", i+1, resultado)
+		rutaEjecutable, err := obtenerRutaEjecutableDeAccesoDirecto(resultado)
+		if err != nil {
+			log.Println("Error al obtener la ruta del ejecutable:", err)
+			return fmt.Errorf("error al obtener la ruta del ejecutable: %v", err)
+
+		}
+		errx := abrirRutaEjecutableDeAccesoDirecto(rutaEjecutable)
+		if errx != nil {
+			log.Println("Error al abrir el archivo:", err)
+			return fmt.Errorf("error al abrir el archivo: %v", err)
+		}
+	}
+	return nil
 }
 
 func main() {
@@ -109,6 +146,14 @@ func main() {
 		return
 	}
 	exeDir := filepath.Dir(exePath)
+	err_env := godotenv.Load(filepath.Join(exeDir, ".env"))
+	if err_env != nil {
+		log.Fatal("Error al cargar  el archivo  .env ")
+	}
+
+	log.Println("---------------------------------")
+	log.Println("Inicio de la aplicación")
+	log.Println("---------------------------------")
 
 	logFilePath := filepath.Join(exeDir, "start_app.log")
 
@@ -122,6 +167,12 @@ func main() {
 	// Configurar logger para escribir en el archivo de log
 	log.SetOutput(logFile)
 
+	FOLDER_IN_PROGRAM_DATA := os.Getenv("FOLDER_IN_PROGRAM_DATA")
+	log.Println(FOLDER_IN_PROGRAM_DATA)
+
+	FOLDER_IN_APP_DATA := os.Getenv("FOLDER_IN_APP_DATA")
+	log.Println(FOLDER_IN_APP_DATA)
+
 	// Definir el flag para el nombre del archivo
 	nombreArchivo := flag.String("name", "", "Nombre del archivo a buscar")
 	exactly := flag.Bool("exactly", true, "Es busqueda exacta")
@@ -129,31 +180,25 @@ func main() {
 
 	if *nombreArchivo == "" {
 		log.Println("Por favor, proporciona un nombre de archivo con el parámetro -name")
-		fmt.Println("Por favor, proporciona un nombre de archivo con el parámetro -name")
 		return
 	}
+	log.Println("*****************************************")
+	log.Println("Parametros de entrada")
+	log.Println("Nombre del archivo:", *nombreArchivo)
+	log.Println("Busqueda exacta:", *exactly)
+	log.Println("*****************************************")
 
-	// Directorio donde deseas buscar
-	directorio := "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs"
+	err_prg_data := busqueda(FOLDER_IN_PROGRAM_DATA, *nombreArchivo, *exactly)
 
-	// Buscar archivos
-	resultados, err := buscarArchivos(*nombreArchivo, directorio, *exactly)
-	if err != nil {
-		log.Println("Error al buscar archivos:", err)
-		fmt.Println("Error al buscar archivos:", err)
-		return
-	}
-
-	// Imprimir resultados
-	for i, resultado := range resultados {
-		log.Printf("Coincidencia %d: %s\n", i+1, resultado)
-		fmt.Printf("Coincidencia %d: %s\n", i+1, resultado)
-		rutaEjecutable, err := obtenerRutaEjecutableDeAccesoDirecto(resultado)
-		if err != nil {
-			log.Println("Error al obtener la ruta del ejecutable:", err)
-			fmt.Println("Error al obtener la ruta del ejecutable:", err)
+	if err_prg_data != nil {
+		log.Println("Error al buscar archivos:", err_prg_data)
+		err_app_data := busqueda(FOLDER_IN_APP_DATA, *nombreArchivo, *exactly)
+		if err_app_data != nil {
+			log.Println("Error al buscar archivos:", err_app_data)
 			return
 		}
-		abrirRutaEjecutableDeAccesoDirecto(rutaEjecutable)
 	}
+	log.Println("---------------------------------")
+	log.Println("Termina el cierre de la aplicación")
+	log.Println("---------------------------------")
 }
