@@ -101,8 +101,18 @@ func abrirRutaEjecutableDeAccesoDirecto(programa string) {
 }
 
 func main() {
+
 	// Crear archivo de log
-	logFile, err := os.OpenFile("start_app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	exePath, err := os.Executable()
+	if err != nil {
+		fmt.Println("Error al obtener la ruta del ejecutable:", err)
+		return
+	}
+	exeDir := filepath.Dir(exePath)
+
+	logFilePath := filepath.Join(exeDir, "start_app.log")
+
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		fmt.Println("Error al crear archivo de log:", err)
 		return
