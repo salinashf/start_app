@@ -23,6 +23,18 @@ Compilé el programa con estos parámetros para que no muestre nada por consola:
 ```sh
 go build -ldflags -H=windowsgui -o start_app.exe .
 ```
+## Como instalar
+
+Para instalar el comando se deber colocar `start_app.exe` en una carpeta determinada
+> Ejemplo c:/utils 
+
+> c:/utils/start_app.exe
+
+Esta ruta hay que agregar dentro de las variables de entorno de `PATH`
+
+Terminado esto se puede ejecutar desde la consola el comando  `start_app -name brave -exactly true`
+
+
 
 ## Control de errores  
 
