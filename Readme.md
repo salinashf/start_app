@@ -26,15 +26,44 @@ go build -ldflags -H=windowsgui -o start_app.exe .
 ## Como instalar
 
 Para instalar el comando se deber colocar `start_app.exe` en una carpeta determinada
-> Ejemplo c:/utils 
 
-> c:/utils/start_app.exe
+> Ejemplo c:/utils
+> 
+```sh
+c:/utils/start_app.exe
+```
+
 
 Esta ruta hay que agregar dentro de las variables de entorno de `PATH`
 
 Terminado esto se puede ejecutar desde la consola el comando  `start_app -name brave -exactly true`
 
+## Como Configurar
 
+El comando, permite configurar la ruta donde se buscará las aplicaciones, 
+esta configuración se da través de un archivo llamado `.env`  , existe dos rutas básicas donde se buscara la aplicación
+
+| Clave | Valor  | 
+| ------ | ------ |
+|FOLDER_IN_PROGRAM_DATA| C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs|
+|FOLDER_IN_APP_DATA| C:\\Users\\mi_usuario\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs|
+
+Los dos archivos deben de estar en el mismo directorio  `.env`  y  `start_app.exe` 
+
+>Ejemplo asumiendo que se coloque dentro de la carpeta   **C:\utils** , dentro de esta misma carpeta se creara el archivo de Log **start_app.log**
+ 
+```md
+C:\utils
+├── start_app.exe
+├── .env
+└── start_app.log
+
+```
+## Control ejecutar  
+
+Para abrir la aplicación de Discord,
+>  **start_app  -name 'Discord' -exactly 'true'**
+> 
 
 ## Control de errores  
 
