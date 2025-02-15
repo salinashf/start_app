@@ -59,37 +59,60 @@ func compararCadenas(input string, path_finder string, is_exactly bool) bool {
 	return false
 }
 
-func obtenerRutaEjecutableDeAccesoDirecto(rutaAccesoDirecto string) (string, error) {
+func obtenerRutaEjecutableDeAccesoDirecto(rutaAccesoDirecto string) (string, string, error) {
+	log.Println("----Inicia el proceso de extraer el ejecutable >----")
 	ole.CoInitialize(0)
 	defer ole.CoUninitialize()
 
 	// Crear objeto COM WScript.Shell
 	shell, err := oleutil.CreateObject("WScript.Shell")
 	if err != nil {
-		return "", fmt.Errorf("error creando objeto WScript.Shell: %w", err)
+		return "", "", fmt.Errorf("error creando objeto WScript.Shell: %w", err)
 	}
 	defer shell.Release()
-
+	log.Println("----Objeto COM WScript.Shell creado ----")
 	// Crear una instancia de IDispatch
 	wshell, err := shell.QueryInterface(ole.IID_IDispatch)
 	if err != nil {
-		return "", fmt.Errorf("error creando IDispatch: %w", err)
+		return "", "", fmt.Errorf("error creando IDispatch: %w", err)
 	}
 	defer wshell.Release()
-
+	log.Println("----Instancia de IDispatch creada ----")
 	// Obtener el acceso directo como objeto COM
 	shortcut := oleutil.MustCallMethod(wshell, "CreateShortcut", rutaAccesoDirecto)
 	defer shortcut.Clear()
-
+	log.Println("----Acceso directo extraido ----")
 	// Obtener la propiedad TargetPath (ruta del ejecutable)
 	targetPath := oleutil.MustGetProperty(shortcut.ToIDispatch(), "TargetPath").ToString()
+	// Obtener la propiedad Arguments (argumentos del ejecutable)
+	arguments := oleutil.MustGetProperty(shortcut.ToIDispatch(), "Arguments").ToString()
+	// Obtener la propiedad WorkingDirectory (directorio de trabajo)
+	workingDirectory := oleutil.MustGetProperty(shortcut.ToIDispatch(), "WorkingDirectory").ToString()
 
-	return targetPath, nil
+	log.Println("****************************")
+	log.Println("----Ruta ejecutable del acceso directo extraido >----")
+	log.Println("----Ruta :", targetPath)
+	log.Println("----Argumentos :", arguments)
+	log.Println("----Directorio de trabajo :", workingDirectory)
+	log.Println("****************************")
+
+	return targetPath, arguments, nil
 }
 
-func abrirRutaEjecutableDeAccesoDirecto(programa string) error {
-	// Comando para ejecutar el programa
-	cmd := exec.Command(programa)
+func abrirRutaEjecutableDeAccesoDirecto(programa string, args string) error {
+	log.Println("***********####*****************")
+	log.Println("----Programa a iniciar ----")
+	log.Println("----App:", programa)
+	log.Println("----Argumento:", args)
+	log.Println("***********#####*****************")
+
+	var cmd *exec.Cmd
+	if args != " " {
+		pargs := strings.Split(args, " ")
+		cmd = exec.Command(programa, pargs...)
+	} else {
+		cmd = exec.Command(programa)
+	}
 
 	// Iniciar el comando sin esperar a que termine
 	err := cmd.Start()
@@ -122,13 +145,13 @@ func busqueda(directorio string, nombreArchivo string, exactly bool) error {
 	// Imprimir resultados
 	for i, resultado := range resultados {
 		log.Printf("Coincidencia %d: %s\n", i+1, resultado)
-		rutaEjecutable, err := obtenerRutaEjecutableDeAccesoDirecto(resultado)
+		rutaEjecutable, argumentos, err := obtenerRutaEjecutableDeAccesoDirecto(resultado)
 		if err != nil {
 			log.Println("Error al obtener la ruta del ejecutable:", err)
 			return fmt.Errorf("error al obtener la ruta del ejecutable: %v", err)
 
 		}
-		errx := abrirRutaEjecutableDeAccesoDirecto(rutaEjecutable)
+		errx := abrirRutaEjecutableDeAccesoDirecto(rutaEjecutable, argumentos)
 		if errx != nil {
 			log.Println("Error al abrir el archivo:", err)
 			return fmt.Errorf("error al abrir el archivo: %v", err)
